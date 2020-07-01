@@ -7,7 +7,6 @@ var router = express.Router();
 router.get('/', async (_, res) => {
   try {
     const accounts = await accountsModel.find({});
-    // delete accounts._id;
     res.send(accounts);
     } catch (err) {
         res.status(400).send({ error: err.message});
@@ -94,7 +93,7 @@ router.get('/listlargebalances', async (req, res) => {
     let result = [];
 
     function create_array(account){
-      let acc = { "agency": account['agency'], "account": account['account'], "balance": account['balance'] };
+      let acc = { "agency": account['agency'], "account": account['account'], "name": account['name'], "balance": account['balance'] };
       
       result.push(acc);
     }
@@ -216,6 +215,54 @@ router.put('/withdraw', async (req, res) => {
       res.status(400).send({ error: err.message});
       console.log(`PUT /account/withdraw - ${err.message}`);
     };
+});
+
+router.get('/makeprivate', async (_, res) => {
+  try {
+    let result = [];
+    let top_accounts = [];
+
+    function get_max(accounts){
+      let account = 0;
+      let balance = 0;
+      const results = accounts['result'];
+
+      for(i = 0; i < results.length; i++) {
+        
+        if(results[i]['balance'] > balance) {
+          balance = results[i]['balance'];
+          account = results[i]['account'];
+        }
+      }
+      top_account = { "agency": accounts['_id'], "account": account };
+      top_accounts.push(top_account);
+    }
+
+    async function tranfersToPrivate(account) {
+      const transfered_accounts = await accountsModel.findOneAndUpdate(
+        {$and: [{agency: {$eq: account['agency']}}, {account: {$eq: account['account']}}]},
+        {$set: {agency: 99 }},
+        {new: true}
+      );
+    }
+
+    const accounts_list = await accountsModel.aggregate(
+      [{'$group': {'_id': '$agency', 'result': {'$push': {'account': '$account', 'balance': '$balance'}}}}]
+      );
+      
+    accounts_list.forEach(get_max);
+
+    top_accounts.forEach(tranfersToPrivate);
+
+    const private_accounts = await accountsModel.find(
+      {agency: {$eq: 99}}
+      );
+
+    res.send(`${JSON.stringify(private_accounts)}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account/makeprivate - ${err.message}`);
+  };
 });
 
 router.delete('/', async (req, res) => {
