@@ -52,19 +52,23 @@ router.put('/withdraw', async (req, res) => {
       {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]}
       );
 
-    const balance = account_info['balance'];
+    if(account_info !== null) {
+          const balance = account_info['balance'];
 
-    if(balance >= value + 1){
-      debit = value + 1;
-      const doWithdraw = await accountsModel.findOneAndUpdate(
-        {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]},
-        {$inc: {balance: -1 * (value + 1)}},
-        {new: true}
-        );
-      result = `Withdraw done, your current balance is ${doWithdraw['balance']}`
-    } else {
-      result = `Withdraw not possible, your current balance is ${balance}`
-    }
+          if(balance >= value + 1){
+            debit = value + 1;
+            const doWithdraw = await accountsModel.findOneAndUpdate(
+              {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]},
+              {$inc: {balance: -1 * (value + 1)}},
+              {new: true}
+              );
+            result = `Withdraw done, your current balance is ${doWithdraw['balance']}`
+          } else {
+            result = `Withdraw not possible, your current balance is ${balance}`
+          }
+      } else {
+        result = `Check your account info`
+      }
 
     res.send(`${result}`);
     } catch (err) {
