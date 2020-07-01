@@ -12,7 +12,8 @@ const app = express();
     await mongoose.connect("mongodb+srv://dbmongo:dbmongo@cluster0.f3z87.mongodb.net/bank_api?retryWrites=true&w=majority",
       {
         useNewUrlParser: true,
-        useUnifiedTopology: true
+        useUnifiedTopology: true,
+        useFindAndModify: false
       }
     );
   } catch (error) {

@@ -40,6 +40,39 @@ router.put('/', async (req, res) => {
     };
 });
 
+router.put('/withdraw', async (req, res) => {
+  try {
+    let request = req.body;
+    const agency = parseInt(request.agency, 10);
+    const account = parseInt(request.account, 10);
+    const value = parseInt(request.value, 10);
+    let result = null;
+
+    const account_info = await accountsModel.findOne(
+      {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]}
+      );
+
+    const balance = account_info['balance'];
+
+    if(balance >= value + 1){
+      debit = value + 1;
+      const doWithdraw = await accountsModel.findOneAndUpdate(
+        {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]},
+        {$inc: {balance: -1 * (value + 1)}},
+        {new: true}
+        );
+      result = `Withdraw done, your current balance is ${doWithdraw['balance']}`
+    } else {
+      result = `Withdraw not possible, your current balance is ${balance}`
+    }
+
+    res.send(`${result}`);
+    } catch (err) {
+      res.status(400).send({ error: err.message});
+      console.log(`PUT /account - ${err.message}`);
+    };
+});
+
 // router.post('/', async (req, res) => {
 //   let account = req.body;
 //   try {
