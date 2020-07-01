@@ -62,6 +62,56 @@ router.get('/agencybalance', async (req, res) => {
   };
 });
 
+router.get('/listsmallbalances', async (req, res) => {
+  try {
+    let request = req.body;
+    const listAccounts = parseInt(request.list, 10);
+    let result = [];
+
+    function create_array(account){
+      let acc = { "agency": account['agency'], "account": account['account'], "balance": account['balance'] };
+      
+      result.push(acc);
+    }
+
+    const account_info = await accountsModel.aggregate(
+      [{'$sort': {'balance': 1 }}, {'$limit': listAccounts }]
+      );
+      
+    account_info.forEach(create_array);
+
+    res.send(`${JSON.stringify(result)}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account/listsmallbalances - ${err.message}`);
+  };
+});
+
+router.get('/listlargebalances', async (req, res) => {
+  try {
+    let request = req.body;
+    const listAccounts = parseInt(request.list, 10);
+    let result = [];
+
+    function create_array(account){
+      let acc = { "agency": account['agency'], "account": account['account'], "balance": account['balance'] };
+      
+      result.push(acc);
+    }
+
+    const account_info = await accountsModel.aggregate(
+      [{'$sort': {'balance': -1 }}, {'$limit': listAccounts }]
+      );
+      
+    account_info.forEach(create_array);
+
+    res.send(`${JSON.stringify(result)}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account/listlargebalances - ${err.message}`);
+  };
+});
+
 router.post('/transfer', async (req, res) => {
   try {
     let request = req.body;
