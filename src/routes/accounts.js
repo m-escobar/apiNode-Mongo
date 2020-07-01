@@ -7,8 +7,7 @@ var router = express.Router();
 router.get('/', async (_, res) => {
   try {
     const accounts = await accountsModel.find({});
-    // let json = JSON.parse(data);
-    // delete json.nextId;
+    // delete accounts._id;
     res.send(accounts);
     } catch (err) {
         res.status(400).send({ error: err.message});
@@ -16,77 +15,82 @@ router.get('/', async (_, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
-  let account = req.body;
+router.put('/', async (req, res) => {
   try {
-    let data = await fs.readFile(global.fileName, 'utf-8');
-    let json = JSON.parse(data);
-
-    account = { id: json.nextId, ...account};
-    json.nextId++;
-    json.accounts.push(account);
-
-    await fs.writeFile(global.fileName, JSON.stringify(json));
+    let request = req.body;
+    const agency = parseInt(request.agency, 10);
+    const account = parseInt(request.account, 10);
+    const value = parseInt(request.value, 10);
     
-    res.send({"new_account": account});
-  } catch (err) {
-      res.status(400).send({ error: err.message });
-      console.log(`POST /account - ${err.message}`);
-  }
-});
+    const result = await accountsModel.findOneAndUpdate(
+      {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]},
+      {$inc: {balance: value}},
+      {new: true}
+      );
+    // const values = JSON.parse(result);
 
-router.get('/:id', async (req, res) => {
-  try {
-    let data = await fs.readFile(global.fileName, 'utf-8');
-    let json = JSON.parse(data);
-    const account = json.accounts.find(account => account.id === parseInt(req.params.id, 10));
+    // json.accounts[accountIndex].id = accountId;
+    // json.accounts[accountIndex].name = account.name;
+    // json.accounts[accountIndex].balance = account.balance;
 
-    if (account) {
-      res.send(account);
-    } else {
-      res.status(400).send({error: 'Account not found'});
-      console.log('GET /account - Account not found');
-    }
-  } catch {
-    res.status(400).send({ error: err.message});
-    console.log(`GET /account/:id - ${err.message}`);
-  };
-});
-
-router.delete('/:id', async (req, res) => {
-  try {
-    let data = await fs.readFile(global.fileName, 'utf-8');
-    let json = JSON.parse(data);
-    let accounts = json.accounts.filter(account => account.id !== parseInt(req.params.id, 10));
-    json.accounts = accounts;
-
-    await fs.writeFile(global.fileName, JSON.stringify(json));
-    res.send('account deleted');
-  } catch {
+    res.send(`${result}`);
+    } catch (err) {
       res.status(400).send({ error: err.message});
-      console.log(`DELETE /account/:id - ${err.message}`);
+      console.log(`PUT /account - ${err.message}`);
     };
 });
 
-router.put('/:id', async (req, res) => {
-  try {
-    let account = req.body;
-    const accountId = parseInt(req.params.id, 10);
-    let data = await fs.readFile(global.fileName, 'utf-8');
+// router.post('/', async (req, res) => {
+//   let account = req.body;
+//   try {
+//     let data = await fs.readFile(global.fileName, 'utf-8');
+//     let json = JSON.parse(data);
 
-    let json = JSON.parse(data);
-    let accountIndex = json.accounts.findIndex(account => account.id === accountId);
+//     account = { id: json.nextId, ...account};
+//     json.nextId++;
+//     json.accounts.push(account);
+
+//     await fs.writeFile(global.fileName, JSON.stringify(json));
     
-    json.accounts[accountIndex].id = accountId;
-    json.accounts[accountIndex].name = account.name;
-    json.accounts[accountIndex].balance = account.balance;
+//     res.send({"new_account": account});
+//   } catch (err) {
+//       res.status(400).send({ error: err.message });
+//       console.log(`POST /account - ${err.message}`);
+//   }
+// });
 
-    await fs.writeFile(global.fileName, JSON.stringify(json));
-    res.send('account updated');
-    } catch {
-      res.status(400).send({ error: err.message});
-      console.log(`PUT /account/:id - ${err.message}`);
-    };
-});
+// router.get('/:id', async (req, res) => {
+//   try {
+//     let data = await fs.readFile(global.fileName, 'utf-8');
+//     let json = JSON.parse(data);
+//     const account = json.accounts.find(account => account.id === parseInt(req.params.id, 10));
+
+//     if (account) {
+//       res.send(account);
+//     } else {
+//       res.status(400).send({error: 'Account not found'});
+//       console.log('GET /account - Account not found');
+//     }
+//   } catch {
+//     res.status(400).send({ error: err.message});
+//     console.log(`GET /account/:id - ${err.message}`);
+//   };
+// });
+
+// router.delete('/:id', async (req, res) => {
+//   try {
+//     let data = await fs.readFile(global.fileName, 'utf-8');
+//     let json = JSON.parse(data);
+//     let accounts = json.accounts.filter(account => account.id !== parseInt(req.params.id, 10));
+//     json.accounts = accounts;
+
+//     await fs.writeFile(global.fileName, JSON.stringify(json));
+//     res.send('account deleted');
+//   } catch {
+//       res.status(400).send({ error: err.message});
+//       console.log(`DELETE /account/:id - ${err.message}`);
+//     };
+// });
+
 
 module.exports = router;

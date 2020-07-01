@@ -22,8 +22,6 @@ const app = express();
 
 const accountsSchema = mongoose.Schema;
 
-// global.fileName = 'accounts.json';
-
 // const { combine, timestamp, label, printf } = winston.format;
 // const myFormat = printf(({level, message, label, timestamp}) => {
 //   return `${timestamp} [${label}] ${level}: ${message}`;
@@ -49,15 +47,8 @@ app.use('/account', accountsRouter);
 
 app.listen(3000, async () => {
   try {
-    // await fs.readFile(global.fileName, 'utf-8');
     console.log('API Working');
   } catch(err) {
-      // const initialJson = {
-      //   nextId: 1,
-      //   accounts: []
-      // };
-      // fs.writeFile(global.fileName, JSON.stringify(initialJson)).catch(err => {
-      //   console.log(err);
-      // });
-    }
+        console.log(err);
+      }
 });
