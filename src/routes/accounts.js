@@ -15,6 +15,30 @@ router.get('/', async (_, res) => {
     }
 });
 
+router.get('/balance', async (req, res) => {
+  try {
+    let request = req.body;
+    const agency = parseInt(request.agency, 10);
+    const account = parseInt(request.account, 10);
+    
+    const account_info = await accountsModel.findOne(
+      {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]}
+      );
+
+      if(account_info !== null) {
+        // const balance = account_info['balance'];
+        result = `Balance: ${account_info['balance']}`;
+      } else {
+        result = `Check your account info`
+      }
+
+    res.send(`${result}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account/balance - ${err.message}`);
+  };
+});
+
 router.put('/', async (req, res) => {
   try {
     let request = req.body;
@@ -27,11 +51,6 @@ router.put('/', async (req, res) => {
       {$inc: {balance: value}},
       {new: true}
       );
-    // const values = JSON.parse(result);
-
-    // json.accounts[accountIndex].id = accountId;
-    // json.accounts[accountIndex].name = account.name;
-    // json.accounts[accountIndex].balance = account.balance;
 
     res.send(`${result}`);
     } catch (err) {
@@ -62,12 +81,12 @@ router.put('/withdraw', async (req, res) => {
               {$inc: {balance: -1 * (value + 1)}},
               {new: true}
               );
-            result = `Withdraw done, your current balance is ${doWithdraw['balance']}`
+            result = `Withdraw done, your current balance is ${doWithdraw['balance']}`;
           } else {
-            result = `Withdraw not possible, your current balance is ${balance}`
+            result = `Withdraw not possible, your current balance is ${balance}`;
           }
       } else {
-        result = `Check your account info`
+        result = `Check your account info`;
       }
 
     res.send(`${result}`);
