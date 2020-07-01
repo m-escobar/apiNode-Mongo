@@ -39,6 +39,55 @@ router.get('/balance', async (req, res) => {
   };
 });
 
+router.post('/transfer', async (req, res) => {
+  try {
+    let request = req.body;
+    const acc_origin = parseInt(request.account_origin, 10);
+    const acc_destination = parseInt(request.account_destination, 10);
+    const value = parseInt(request.value, 10);
+    let transfer_tax = 0;
+
+    const origin = await accountsModel.findOne(
+      {account: {$eq: acc_origin}}
+      );
+
+    const destination = await accountsModel.findOne(
+      {account: {$eq: acc_destination}}
+      );
+
+    if((origin === null) || (destination === null)){
+      result = `Check account info`;
+      res.send(`${result}`);
+    } else {
+      if(origin['agency'] !== destination['agency']){
+        transfer_tax = 8;
+      }
+
+      if(origin['balance'] < value + transfer_tax){
+        result = `Transfer not possible, check your balance`;
+      } else {
+        const tranfer_debit = await accountsModel.findOneAndUpdate(
+          {$and: [{agency: {$eq: origin['agency']}}, {account: {$eq: origin['account']}}]},
+          {$inc: {balance: -1 * (value + transfer_tax)}},
+          {new: true}
+          );
+        result = `Transfer done. Your balance is ${tranfer_debit['balance']}`;
+        const transfer_credit = await accountsModel.findOneAndUpdate(
+          {$and: [{agency: {$eq: destination['agency']}}, {account: {$eq: destination['account']}}]},
+          {$inc: {balance: value}},
+          {new: true}
+          );
+      
+      }
+    }
+
+    res.send(`${result}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account/balance - ${err.message}`);
+  };
+});
+
 router.put('/', async (req, res) => {
   try {
     let request = req.body;
@@ -94,6 +143,33 @@ router.put('/withdraw', async (req, res) => {
       res.status(400).send({ error: err.message});
       console.log(`PUT /account - ${err.message}`);
     };
+});
+
+router.delete('/', async (req, res) => {
+  try {
+    let request = req.body;
+    const agency = parseInt(request.agency, 10);
+    const account = parseInt(request.account, 10);
+    
+    const account_info = await accountsModel.deleteOne(
+      {$and: [{agency: {$eq: agency}}, {account: {$eq: account}}]}
+      );
+
+      if(account_info !== null) {
+        const all_accounts = await accountsModel.find(
+          {agency: {$eq: agency}}
+          );
+        
+        result = `Account deleted. This agency has ${all_accounts.length} active accounts`;
+      } else {
+        result = `Check your account info`
+      }
+
+    res.send(`${result}`);
+  } catch (err) {
+    res.status(400).send({ error: err.message});
+    console.log(`GET /account - ${err.message}`);
+  };
 });
 
 // router.post('/', async (req, res) => {
